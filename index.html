@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="assets/logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>Asistente IA</title>
+</head>
+<body>
+
+    <div class="app">
+
+        <aside class="sidebar">
+
+            <div class="sidebar-brand">
+                <div class="brand-mark">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <rect x="1" y="1" width="8" height="8" stroke="#6B3E26" stroke-width="1.5"/>
+                        <rect x="11" y="1" width="8" height="8" stroke="#6B3E26" stroke-width="1.5"/>
+                        <rect x="1" y="11" width="8" height="8" stroke="#6B3E26" stroke-width="1.5"/>
+                        <rect x="11" y="11" width="8" height="8" stroke="#6B3E26" stroke-width="1.5"/>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-name">ISOPANELES</span>
+                    <span class="brand-sub">Asistente IA</span>
+                </div>
+            </div>
+
+            <div class="sidebar-actions">
+                <button class="btn-new-chat" id="btnNewChat">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M7 1V13M1 7H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+                    </svg>
+                    Nueva consulta
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <p class="nav-label">Historial</p>
+                <ul class="chat-list" id="chatList">
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="footer-info">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <circle cx="7" cy="7" r="6" stroke="#6B3E26" stroke-width="1.2"/>
+                        <path d="M7 6.5V10M7 4.5V5" stroke="#6B3E26" stroke-width="1.5" stroke-linecap="square"/>
+                    </svg>
+                    <span>Consultas disponibles 24/7</span>
+                </div>
+            </div>
+
+        </aside>
+
+        
+        <main class="chat-main">
+
+            
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="btn-menu" id="btnMenu" aria-label="Menú">
+                        <span></span><span></span><span></span>
+                    </button>
+                    <div class="topbar-title">
+                        <h1>Consultas de Productos</h1>
+                        <div class="status-badge">
+                            <span class="status-dot"></span>
+                            IA activa
+                        </div>
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <a href="#" class="topbar-link">Catálogo</a>
+                    <a href="#" class="topbar-link">Contacto</a>
+                    <a href="#" class="btn-cta">Cotizar</a>
+                </div>
+            </header>
+
+            
+            <section class="chat-messages" id="chatMessages">
+
+              
+                <div class="chat-welcome" id="chatWelcome">
+                    <div class="welcome-icon">
+                        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                            <rect x="2" y="2" width="16" height="16" stroke="#6B3E26" stroke-width="1.5"/>
+                            <rect x="22" y="2" width="16" height="16" stroke="#6B3E26" stroke-width="1.5"/>
+                            <rect x="2" y="22" width="16" height="16" stroke="#6B3E26" stroke-width="1.5"/>
+                            <rect x="22" y="22" width="16" height="16" stroke="#6B3E26" stroke-width="1.5"/>
+                        </svg>
+                    </div>
+                    <h2>¿En qué podemos ayudarte?</h2>
+                    <p>Consultá precios, medidas, instalación y especificaciones técnicas de nuestros isopaneles.</p>
+                    <div class="quick-questions">
+                        <button class="quick-btn" data-question="¿Qué tipos de isopaneles tienen disponibles?">Tipos de isopaneles</button>
+                        <button class="quick-btn" data-question="¿Cuáles son los espesores disponibles?">Espesores disponibles</button>
+                        <button class="quick-btn" data-question="¿Cómo es el proceso de instalación?">Proceso de instalación</button>
+                        <button class="quick-btn" data-question="¿Realizan envíos a todo el país?">Envíos y logística</button>
+                    </div>
+                </div>
+
+               
+
+            </section>
+
+            
+            <footer class="chat-input-area">
+                <div class="input-wrapper">
+                    <textarea
+                        id="userInput"
+                        class="input-field"
+                        placeholder="Escribí tu consulta sobre isopaneles..."
+                        rows="1"
+                        aria-label="Mensaje"
+                    ></textarea>
+                    <button class="btn-send" id="btnSend" aria-label="Enviar">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M2 14L14 8L2 2V6.5L10 8L2 9.5V14Z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+                <p class="input-hint">Este asistente responde consultas sobre nuestros productos de isopaneles (Puede cometer errores).</p>
+            </footer>
+
+        </main>
+
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
