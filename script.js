@@ -1,8 +1,8 @@
 const CONFIG = {
     API_ENDPOINT: "https://twilight-sunset-bc1e.nahumsouza2003.workers.dev",
     COMPANY_NAME: "Isopaneles",
-    BOT_INITIALS: "ISO",
-    USER_INITIALS: "VOS",
+    BOT_INITIALS: "IA",
+    USER_INITIALS: "TU",
 };
 
 let conversations = [];
