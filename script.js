@@ -19,10 +19,36 @@ const sidebar = document.querySelector(".sidebar");
 const quickBtns = document.querySelectorAll(".quick-btn");
 
 document.addEventListener("DOMContentLoaded", () => {
+    checkSystemStatus(); // Inicia la verificación del punto verde
     loadConversations();
     renderChatList();
     setupEventListeners();
 });
+
+// NUEVA FUNCIÓN: Verifica si el Worker responde
+async function checkSystemStatus() {
+    const dot = document.querySelector(".status-dot");
+    const badge = document.querySelector(".status-badge");
+    
+    try {
+        // Hacemos una petición ligera al Worker
+        const response = await fetch(CONFIG.API_ENDPOINT, { 
+            method: "OPTIONS",
+            cache: "no-store"
+        });
+
+        if (response.ok || response.status === 204 || response.status === 200 || response.status === 405) {
+            dot.style.backgroundColor = "#2ecc71"; // Verde brillante
+            badge.innerHTML = '<span class="status-dot" style="background-color: #2ecc71"></span> IA activa';
+        } else {
+            throw new Error();
+        }
+    } catch (e) {
+        dot.style.backgroundColor = "#e74c3c"; // Rojo
+        badge.innerHTML = '<span class="status-dot" style="background-color: #e74c3c"></span> IA desconectada';
+        badge.style.color = "#e74c3c";
+    }
+}
 
 function setupEventListeners() {
     btnSend.addEventListener("click", handleSend);
@@ -91,6 +117,7 @@ async function handleSend() {
     } catch (error) {
         removeTyping(typingEl);
         appendMessage("ai", "Error al procesar. Reintentá.");
+        checkSystemStatus(); // Re-verifica si se cayó la conexión
     }
 
     btnSend.disabled = false;
