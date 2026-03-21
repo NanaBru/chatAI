@@ -302,7 +302,7 @@ textarea { font-family: var(--font-body); }
 
 .topbar-link:hover { color: var(--black); }
 
-.btn-cta {
+.btn-cotizar {
     font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.08em;
@@ -314,7 +314,7 @@ textarea { font-family: var(--font-body); }
     transition: background 0.15s;
 }
 
-.btn-cta:hover { background: var(--brown); border-color: var(--brown); }
+.btn-cotizar:hover { background: var(--brown); border-color: var(--brown); }
 
 .chat-messages {
     flex: 1;

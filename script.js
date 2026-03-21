@@ -25,7 +25,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function setupEventListeners() {
-
     btnSend.addEventListener("click", handleSend);
 
     userInput.addEventListener("keydown", (e) => {
@@ -61,13 +60,16 @@ function setupEventListeners() {
             handleSend();
         });
     });
+
+    const btnCotizar = document.querySelector(".btn-cotizar"); 
+    if (btnCotizar) {
+        btnCotizar.addEventListener("click", handleCotizacion);
+    }
 }
 
 async function handleSend() {
     const text = userInput.value.trim();
     if (!text) return;
-
-
     if (!activeConvId) createNewConversation();
 
     userInput.value = "";
@@ -75,26 +77,20 @@ async function handleSend() {
     btnSend.disabled = true;
 
     hideChatWelcome();
-
     appendMessage("user", text);
-
     addMessageToConversation(activeConvId, "user", text);
-
     updateChatTitle(activeConvId, text);
 
     const typingEl = showTyping();
 
     try {
         const responseText = await callAPI(text, getConversationHistory(activeConvId));
-
         removeTyping(typingEl);
         appendMessage("ai", responseText);
         addMessageToConversation(activeConvId, "ai", responseText);
-
     } catch (error) {
         removeTyping(typingEl);
-        appendMessage("ai", "Lo sentimos, hubo un error al procesar tu consulta. Por favor intentá nuevamente.");
-        console.error("API Error:", error);
+        appendMessage("ai", "Error al procesar. Reintentá.");
     }
 
     btnSend.disabled = false;
@@ -105,176 +101,119 @@ async function handleSend() {
 async function callAPI(message, history) {
     const response = await fetch(CONFIG.API_ENDPOINT, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            message: message,
-            history: history,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: message, history: history }),
     });
-
-    if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-    }
-
     const data = await response.json();
-
-    let formatReply = reply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-
-    formatReply = formatReply.replace(/\n/g, '<br>');
-
-    bubble.innerHTML = formatReply;
-
-
-    return data.reply || data.choices?.[0]?.message?.content || "Sin respuesta.";
+    return data.reply || "Sin respuesta.";
 }
 
 function appendMessage(role, text) {
     const isAI = role === "ai";
     const time = getTime();
-
     const row = document.createElement("div");
     row.className = `message-row ${isAI ? "ai" : "user"}`;
 
-    row.innerHTML = `
-        <div class="msg-avatar ${isAI ? "ai-avatar" : "user-avatar"}">
-            ${isAI ? CONFIG.BOT_INITIALS : CONFIG.USER_INITIALS}
-        </div>
-        <div class="msg-content">
-            <div class="msg-bubble">${escapeHTML(text)}</div>
-            <span class="msg-time">${time}</span>
-        </div>
-    `;
+    let processedText = escapeHTML(text);
 
+    if (isAI) {
+        processedText = processedText.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+        processedText = processedText.replace(/^## (.*$)/gim, '<h3>$1</h3>');
+        processedText = processedText.replace(/^# (.*$)/gim, '<h3>$1</h3>');
+        processedText = processedText.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+        processedText = processedText.replace(/^\- (.*$)/gim, '<li>$1</li>');
+        if (processedText.includes('<li>')) {
+            processedText = processedText.replace(/(<li>.*<\/li>)/g, '<ul>$1</ul>').replace(/<\/ul><ul>/g, '');
+        }
+        processedText = processedText.replace(/\n/g, '<br>');
+    }
+
+    row.innerHTML = `
+        <div class="msg-avatar ${isAI ? "ai-avatar" : "user-avatar"}">${isAI ? CONFIG.BOT_INITIALS : CONFIG.USER_INITIALS}</div>
+        <div class="msg-content">
+            <div class="msg-bubble">${processedText}</div>
+            <span class="msg-time">${time}</span>
+        </div>`;
     chatMessages.appendChild(row);
     scrollToBottom();
+}
+
+function formatForWhatsApp(text) {
+    let clean = text;
+    clean = clean.replace(/^#+ (.*$)/gim, '*$1*');
+    clean = clean.replace(/\*\*(.*?)\*\*/g, '*$1*');
+    clean = clean.replace(/^\- /gim, '• ');
+    return clean;
+}
+
+async function handleCotizacion() {
+    if (!activeConvId || getConversationHistory(activeConvId).length === 0) {
+        alert("Primero contame qué necesitás.");
+        return;
+    }
+    const typingEl = showTyping();
+    try {
+        const promptResumen = "Generá un RESUMEN TÉCNICO. Solo listá los productos, ubicación y envío (si se mencionaron). NO agregues campos para nombre, teléfono ni horarios.";
+        const resumen = await callAPI(promptResumen, getConversationHistory(activeConvId));
+        removeTyping(typingEl);
+        appendMessage("ai", "Aquí tenés el resumen para enviar:");
+        renderFormularioContacto(resumen);
+    } catch (error) {
+        removeTyping(typingEl);
+    }
+}
+
+function renderFormularioContacto(resumenOriginal) {
+    const row = document.createElement("div");
+    row.className = "message-row ai";
+    row.innerHTML = `
+        <div class="msg-avatar ai-avatar">ISO</div>
+        <div class="msg-content">
+            <div class="msg-bubble" style="background: #fdfaf6; border: 1px solid #d4c5b9;">
+                <p><b>Datos para el vendedor:</b></p>
+                <input type="text" id="form-nombre" placeholder="Nombre" style="width:100%; margin: 5px 0; padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
+                <input type="tel" id="form-tel" placeholder="WhatsApp" style="width:100%; margin: 5px 0; padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
+                <button id="btn-final-enviar" style="background: #7a4f37; color: white; border: none; padding: 10px; width: 100%; cursor: pointer; margin-top: 10px; border-radius: 5px; font-weight: bold;">
+                    ENVIAR POR WHATSAPP
+                </button>
+            </div>
+        </div>`;
+    chatMessages.appendChild(row);
+    scrollToBottom();
+
+    document.getElementById("btn-final-enviar").addEventListener("click", () => {
+        const nombre = document.getElementById("form-nombre").value;
+        const tel = document.getElementById("form-tel").value;
+        if (!nombre || !tel) return alert("Completá los datos.");
+
+        const resumenWA = formatForWhatsApp(resumenOriginal);
+        const mensajeFinal = `*NUEVO PEDIDO WEB*\n\n*Cliente:* ${nombre}\n*Contacto:* ${tel}\n\n${resumenWA}`;
+        window.open(`https://wa.me/59895927568?text=${encodeURIComponent(mensajeFinal)}`, '_blank');
+    });
 }
 
 function showTyping() {
     const row = document.createElement("div");
     row.className = "message-row ai";
     row.id = "typingRow";
-    row.innerHTML = `
-        <div class="msg-avatar ai-avatar">${CONFIG.BOT_INITIALS}</div>
-        <div class="msg-content">
-            <div class="typing-bubble">
-                <span></span><span></span><span></span>
-            </div>
-        </div>
-    `;
+    row.innerHTML = `<div class="msg-avatar ai-avatar">${CONFIG.BOT_INITIALS}</div><div class="msg-content"><div class="typing-bubble"><span></span><span></span><span></span></div></div>`;
     chatMessages.appendChild(row);
     scrollToBottom();
     return row;
 }
 
-function removeTyping(el) {
-    if (el && el.parentNode) el.parentNode.removeChild(el);
-}
-
-function hideChatWelcome() {
-    if (chatWelcome) chatWelcome.style.display = "none";
-}
-
-function createNewConversation() {
-    const id = Date.now().toString();
-    const conv = { id, title: "Nueva consulta", messages: [] };
-    conversations.unshift(conv);
-    activeConvId = id;
-    saveConversations();
-    renderChatList();
-    clearChatMessages();
-    if (chatWelcome) chatWelcome.style.display = "block";
-}
-
-function clearChatMessages() {
-    const rows = chatMessages.querySelectorAll(".message-row");
-    rows.forEach(r => r.remove());
-    if (chatWelcome) chatWelcome.style.display = "block";
-}
-
-function addMessageToConversation(convId, role, text) {
-    const conv = conversations.find(c => c.id === convId);
-    if (conv) {
-        conv.messages.push({ role, text, time: getTime() });
-        saveConversations();
-    }
-}
-
-function getConversationHistory(convId) {
-    const conv = conversations.find(c => c.id === convId);
-    return conv ? conv.messages.map(m => ({ role: m.role, content: m.text })) : [];
-}
-
-function updateChatTitle(convId, text) {
-    const conv = conversations.find(c => c.id === convId);
-    if (conv && conv.title === "Nueva consulta") {
-        conv.title = text.length > 36 ? text.slice(0, 36) + "..." : text;
-        saveConversations();
-        renderChatList();
-    }
-}
-
-function renderChatList() {
-    chatList.innerHTML = "";
-    if (conversations.length === 0) {
-        chatList.innerHTML = `<li style="color:#4a443e;font-size:12px;padding:8px 12px;cursor:default">Sin historial</li>`;
-        return;
-    }
-    conversations.forEach(conv => {
-        const li = document.createElement("li");
-        li.textContent = conv.title;
-        li.title = conv.title;
-        if (conv.id === activeConvId) li.classList.add("active");
-        li.addEventListener("click", () => loadConversation(conv.id));
-        chatList.appendChild(li);
-    });
-}
-
-function loadConversation(convId) {
-    activeConvId = convId;
-    clearChatMessages();
-    const conv = conversations.find(c => c.id === convId);
-    if (!conv) return;
-    if (conv.messages.length === 0) {
-        if (chatWelcome) chatWelcome.style.display = "block";
-        return;
-    }
-    hideChatWelcome();
-    conv.messages.forEach(m => appendMessage(m.role, m.text));
-    renderChatList();
-    if (window.innerWidth <= 768) sidebar.classList.remove("open");
-}
-
-function saveConversations() {
-    try {
-        localStorage.setItem("iso_conversations", JSON.stringify(conversations));
-    } catch (_) { }
-}
-
-function loadConversations() {
-    try {
-        const stored = localStorage.getItem("iso_conversations");
-        if (stored) conversations = JSON.parse(stored);
-    } catch (_) {
-        conversations = [];
-    }
-}
-
-function autoResize(el) {
-    el.style.height = "auto";
-    el.style.height = Math.min(el.scrollHeight, 120) + "px";
-}
-
-function scrollToBottom() {
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-function getTime() {
-    return new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
-}
-
-function escapeHTML(text) {
-    const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" };
-    return text.replace(/[&<>"']/g, m => map[m]);
-}   
+function removeTyping(el) { if (el && el.parentNode) el.parentNode.removeChild(el); }
+function hideChatWelcome() { if (chatWelcome) chatWelcome.style.display = "none"; }
+function createNewConversation() { const id = Date.now().toString(); conversations.unshift({ id, title: "Nueva consulta", messages: [] }); activeConvId = id; saveConversations(); renderChatList(); clearChatMessages(); }
+function clearChatMessages() { chatMessages.querySelectorAll(".message-row").forEach(r => r.remove()); if (chatWelcome) chatWelcome.style.display = "block"; }
+function addMessageToConversation(id, role, text) { const c = conversations.find(x => x.id === id); if (c) { c.messages.push({ role, text }); saveConversations(); } }
+function getConversationHistory(id) { const c = conversations.find(x => x.id === id); return c ? c.messages.map(m => ({ role: m.role, content: m.text })) : []; }
+function updateChatTitle(id, text) { const c = conversations.find(x => x.id === id); if (c && c.title === "Nueva consulta") { c.title = text.slice(0, 30); renderChatList(); } }
+function renderChatList() { chatList.innerHTML = ""; conversations.forEach(c => { const li = document.createElement("li"); li.textContent = c.title; if (c.id === activeConvId) li.className = "active"; li.onclick = () => loadConversation(c.id); chatList.appendChild(li); }); }
+function loadConversation(id) { activeConvId = id; clearChatMessages(); const c = conversations.find(x => x.id === id); if (c) { hideChatWelcome(); c.messages.forEach(m => appendMessage(m.role, m.text)); } renderChatList(); }
+function saveConversations() { localStorage.setItem("iso_conversations", JSON.stringify(conversations)); }
+function loadConversations() { const s = localStorage.getItem("iso_conversations"); if (s) conversations = JSON.parse(s); }
+function autoResize(el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; }
+function scrollToBottom() { chatMessages.scrollTop = chatMessages.scrollHeight; }
+function getTime() { return new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }); }
+function escapeHTML(t) { const m = {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}; return t.replace(/[&<>"']/g, x => m[x]); }
